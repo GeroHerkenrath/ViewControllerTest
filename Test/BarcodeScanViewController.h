@@ -12,4 +12,5 @@
 
 @interface BarcodeScanViewController : UIViewController <AVCaptureMetadataOutputObjectsDelegate>
 @property (weak, nonatomic) id <BarcodeScanViewControllerDelegate> delegate;
+
 @end

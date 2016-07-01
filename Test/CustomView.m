@@ -1,10 +1,14 @@
 
 #import "CustomView.h"
 
-@implementation CustomView {
-    UILabel * lblBarcode;
-    NSString * thisBarcode;
-}
+@interface CustomView ()
+
+@property (nonatomic, strong) UILabel * lblBarcode;
+@property (nonatomic, strong) NSString * thisBarcode;
+
+@end
+
+@implementation CustomView
 
 - (id) initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
@@ -12,14 +16,14 @@
         
         self.backgroundColor = [UIColor yellowColor];
         
-        lblBarcode = [[UILabel alloc] initWithFrame:CGRectMake(0, frame.size.height/2,frame.size.width, 35)];
-        lblBarcode.text = @"Not scanned";
-        lblBarcode.font = [UIFont systemFontOfSize:16];
-        lblBarcode.textColor = [UIColor blackColor];
-        lblBarcode.textAlignment = NSTextAlignmentCenter;
-        [lblBarcode setBackgroundColor:[UIColor greenColor]];
+        self.lblBarcode = [[UILabel alloc] initWithFrame:CGRectMake(0, frame.size.height/2,frame.size.width, 35)];
+        self.lblBarcode.text = @"Not scanned";
+        self.lblBarcode.font = [UIFont systemFontOfSize:16];
+        self.lblBarcode.textColor = [UIColor blackColor];
+        self.lblBarcode.textAlignment = NSTextAlignmentCenter;
+        [self.lblBarcode setBackgroundColor:[UIColor greenColor]];
         
-        [self addSubview:lblBarcode];
+        [self addSubview:self.lblBarcode];
         
         UIButton * btnScan = [[UIButton alloc] initWithFrame:CGRectMake(0, frame.size.height/2 + 35 ,frame.size.width, 35)];
         [btnScan setTitle:@"SCAN" forState:UIControlStateNormal];
@@ -47,7 +51,7 @@
     
     switch (btn.tag) {
         case 2:
-            [self.delegate didCloseWindow:thisBarcode];
+            [self.delegate didCloseWindow:self.thisBarcode];
             break;
         case 1:
             [self startScan];
@@ -64,14 +68,19 @@
     bsvc.delegate = self;
     
     UIViewController *currentTopVC = [self currentTopViewController];
+	
     [currentTopVC presentViewController:bsvc animated:YES completion:nil];
     
 }
 - (UIViewController *)currentTopViewController {
-    UIViewController *topVC = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
-    while (topVC.presentedViewController) {
-        topVC = topVC.presentedViewController;
-    }
+    UIViewController *topVC = [[[UIApplication sharedApplication] keyWindow] rootViewController];
+	
+	// ouch... don't do that, use the keyWindow's rootVC instead or set the VC via a property...
+	// there's a bunch of things that can go wrong when you just "iterate" over viewcontrollers.
+	// "presentedViewController" isn't the correct property anyways (it would be presentingViewController)
+//    while (topVC.presentedViewController) {
+//        topVC = topVC.presentedViewController;
+//    }
     return topVC;
 }
 
@@ -80,8 +89,8 @@
     
     NSLog(@"Passed Bardcode: %@ of Type: %@", barcode, type);
     
-    thisBarcode = barcode;
-    lblBarcode.text = thisBarcode;
+    self.thisBarcode = barcode;
+    self.lblBarcode.text = self.thisBarcode;
     
     
 }

@@ -12,5 +12,7 @@
 
 
 @interface CustomView : UIView <BarcodeScanViewControllerDelegate>
-@property (nonatomic, assign) id  delegate;
+
+// here I added the protocol, so assignments are checked.
+@property (nonatomic, weak) id<CustomViewDelegate>  delegate;
 @end

@@ -2,9 +2,12 @@
 #import "ViewController.h"
 #import "CustomView.h"
 
-@interface ViewController () <CustomViewDelegate> {
-    CustomView * cv;
-}
+// you forgot to adopt your own protocol
+@interface ViewController () <CustomViewDelegate>
+
+// I'd advise to use properties over instance variables directly.
+@property (nonatomic, strong) CustomView * cv;
+
 @end
 
 @implementation ViewController
@@ -14,16 +17,21 @@
     // Do any additional setup after loading the view, typically from a nib.
     self.view.backgroundColor = [UIColor greenColor];
     
-    cv = [[CustomView alloc] initWithFrame:self.view.frame];
-    cv.delegate = self;
-    [self.view addSubview:cv];
+    self.cv = [[CustomView alloc] initWithFrame:self.view.frame];
+    self.cv.delegate = self;
+    [self.view addSubview:self.cv];
     
+}
+
+- (BOOL)definesPresentationContext {
+	// this makes the view of this VC appear under the presented view during the transition
+	return YES;
 }
 
 -(void)didCloseWindow:(NSString*)barcode {
     NSLog(@"DidCloseWindow(): %@", barcode);
-    [cv removeFromSuperview];
-    cv = nil;
+    [self.cv removeFromSuperview];
+    self.cv = nil;
     
 }
 

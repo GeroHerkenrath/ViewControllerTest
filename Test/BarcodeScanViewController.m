@@ -2,16 +2,16 @@
 #import "BarcodeScanViewController.h"
 
 @interface BarcodeScanViewController ()
-@property (weak, nonatomic) IBOutlet UIView *previewView;
-@property (weak, nonatomic) IBOutlet UIButton *btnCancel;
-@property (weak, nonatomic) UIButton *btnFlashlight;
+@property (strong, nonatomic) UIView *previewView;
+@property (strong, nonatomic) UIButton *btnCancel;
+//@property (weak, nonatomic) UIButton *btnFlashlight;
 
 @property (nonatomic, strong) AVCaptureSession *captureSession;
 @property (nonatomic, strong) AVCaptureVideoPreviewLayer *videoPreviewLayer;
 
 @property (nonatomic) BOOL isReading, torchIsOn;
 @property (nonatomic) NSString * scannedBarcode;
-- (IBAction)buttonPressed:(id)sender;
+- (IBAction)buttonPressed:(id)sender; // doesn't need to be an action if not used from a xib, but it works for now
 
 @end
 
@@ -25,33 +25,59 @@
     
     _captureSession = nil;
     _isReading = NO;
+	
+	// this makes the bsvc's view not cover the entire screen.
+	// note that "behind" the view is nothing once it is fully presented. view's don't really "stack"
+	// There are other ways to achieve a popover effect which require work. there's also a hack I can show you
+	// creating an image of the "previous" view and display that behind your view. looks exactly like
+	// a popover then, though you gotta be careful with transition animations.
+	CGRect myFrame = self.view.frame;
+	myFrame.size.height /= 2.0;
+	myFrame.origin.y += myFrame.size.height / 2.0;
+	self.view.frame = myFrame;
 
-
-
+	// the bsvc actually expects you to set these via outlets. since you programmatically instantiate it
+	// I changed them from outlets to properties and created them here
+	self.previewView = [[UIView alloc] initWithFrame:self.view.frame];
+	[self.view addSubview:self.previewView];
+	self.btnCancel = [[UIButton alloc] initWithFrame:self.view.frame]; // too large, but just an example
+	[self.btnCancel setTitle:@"Cancel" forState:UIControlStateNormal];
+	[self.btnCancel setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+	[self.btnCancel addTarget:self action:@selector(buttonPressed:) forControlEvents:UIControlEventTouchUpInside];
+	[self.view addSubview:self.btnCancel];
 }
 
-- (void) viewDidLayoutSubviews {
-    [self startReading];
-    
-    _btnFlashlight = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    _btnFlashlight.tag = 1;
-    [_btnFlashlight setTitle:@"Flashlight" forState:UIControlStateNormal];
-    _btnFlashlight.frame = CGRectMake(25, 60, 95, 30);
-    [_btnFlashlight respondsToSelector:@selector(buttonPressed:)];
-    [self.view addSubview:_btnFlashlight];
-    
-    
+// do this here. I left out the flashlight button since it isn't set up anyways.
+-(void)viewWillAppear:(BOOL)animated {
+	[super viewWillAppear:animated];
+	[self startReading];
 }
+
+// don't do that here everytime...
+//- (void) viewDidLayoutSubviews {
+//    [self startReading];
+//    
+//    _btnFlashlight = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+//    _btnFlashlight.tag = 1;
+//    [_btnFlashlight setTitle:@"Flashlight" forState:UIControlStateNormal];
+//    _btnFlashlight.frame = CGRectMake(25, 60, 95, 30);
+//    [_btnFlashlight respondsToSelector:@selector(buttonPressed:)];
+//    [self.view addSubview:_btnFlashlight];
+//    
+//    
+//}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
 
--(void)viewDidDisappear:(BOOL)animated{
-    _isReading = NO;
-    _torchIsOn = false;
-    [self turnTorchOn:_torchIsOn];
+// better here
+-(void)viewWillDisappear:(BOOL)animated{
+	[super viewWillDisappear:animated];
+//    _isReading = NO;
+//    _torchIsOn = false;
+//    [self turnTorchOn:_torchIsOn];
     [self stopReading];
 }
 
@@ -138,9 +164,7 @@
     [_captureSession addOutput:captureMetadataOutput];
     
     // Create a new serial dispatch queue.
-    dispatch_queue_t dispatchQueue;
-    dispatchQueue = dispatch_queue_create("myQueue", NULL);
-    [captureMetadataOutput setMetadataObjectsDelegate:self queue:dispatchQueue];
+    [captureMetadataOutput setMetadataObjectsDelegate:self queue:dispatch_get_main_queue()];
     NSArray * validCodes = @[AVMetadataObjectTypeCode39Code, AVMetadataObjectTypeQRCode];
     [captureMetadataOutput setMetadataObjectTypes:validCodes];
     
@@ -218,7 +242,8 @@
     switch (btn.tag) {
         case 0:
             NSLog(@"Cancel pressed");
-            [self.navigationController popViewControllerAnimated:YES];
+			// I changed this so the button actually closes the view.
+            [self dismissViewControllerAnimated:YES completion:nil];
             break;
         case 1:
             NSLog(@"Flashlight pressed");
